@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie markami i modelami</title>
+</head>
+
+<body>
+    <h1>Zarządzanie markami i modelami</h1>
+
+    <div>
+        <label for="username">Login:</label>
+        <input type="text" id="username">
+        <label for="password">Hasło:</label>
+        <input type="password" id="password">
+        <button onclick="fetchBrands()">Pobierz marki</button>
+    </div>
+
+    <h2>Lista marek i modele:</h2>
+    <ul id="response"></ul>
+
+    <div id="addBrandForm">
+        <h2>Dodaj nową markę</h2>
+        <label>Nazwa marki: <input type="text" id="brandName"></label>
+        <button onclick="addBrand()">Dodaj</button>
+    </div>
+
+    <script>
+        async function fetchBrands() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            try {
+                const response = await fetch('http://localhost:8080/brand', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    }
+                });
+
+                handleResponse(response);
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function fetchModels(brandId, brandName) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            try {
+                const response = await fetch(`http://localhost:8080/brand/${brandId}/model`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    }
+                });
+
+                const modelsData = await response.json();
+                return { brandName, modelsData };
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function addBrand() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            const brandName = document.getElementById('brandName').value;
+            if (!brandName) {
+                alert('Proszę wprowadzić nazwę marki.');
+                return;
+            }
+
+            const brand = { name: brandName };
+
+            try {
+                const response = await fetch('http://localhost:8080/brand', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    },
+                    body: JSON.stringify(brand)
+                });
+
+                handleResponse(response);
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function deleteBrand(brandId) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            try {
+                const response = await fetch(`http://localhost:8080/brand/${brandId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    }
+                });
+
+                handleResponse(response);
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function addModel(brandId) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            const modelName = prompt('Proszę wprowadzić nazwę modelu:');
+            if (!modelName) {
+                alert('Proszę wprowadzić nazwę modelu.');
+                return;
+            }
+
+            const model = { name: modelName };
+
+            try {
+                const response = await fetch(`http://localhost:8080/brand/${brandId}/model`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    },
+                    body: JSON.stringify(model)
+                });
+
+                handleResponse(response);
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function deleteModel(brandId, modelId) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const credentials = `${username}:${password}`;
+            const encodedCredentials = btoa(credentials);
+
+            try {
+                const response = await fetch(`http://localhost:8080/brand/${brandId}/model/${modelId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${encodedCredentials}`
+                    }
+                });
+
+                handleResponse(response);
+            } catch (error) {
+                handleErrorResponse(error);
+            }
+        }
+
+        async function handleResponse(response) {
+            if (response.ok) {
+                const brandsData = await response.json();
+                const responseList = document.getElementById('response');
+                responseList.innerHTML = '';
+
+                for (const brand of brandsData) {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Marka: ${brand.name}`;
+                    responseList.appendChild(listItem);
+
+                    const deleteBrandButton = document.createElement('button');
+                    deleteBrandButton.textContent = 'Usuń markę';
+                    deleteBrandButton.onclick = () => deleteBrand(brand.id);
+                    listItem.appendChild(deleteBrandButton);
+
+                    const showModelsButton = document.createElement('button');
+                    showModelsButton.textContent = 'Pokaż modele';
+                    showModelsButton.onclick = async () => {
+                        // Usuń poprzednią listę modeli, jeśli istnieje
+                        const existingModelsList = listItem.querySelector('ul');
+                        if (existingModelsList) {
+                            existingModelsList.remove();
+                        }
+
+                        const { brandName, modelsData } = await fetchModels(brand.id, brand.name);
+                        const modelsList = document.createElement('ul');
+
+                        modelsData.forEach(model => {
+                            const modelItem = document.createElement('li');
+                            modelItem.textContent = `Model: ${model.name}`;
+
+                            const deleteModelButton = document.createElement('button');
+                            deleteModelButton.textContent = 'Usuń model';
+                            deleteModelButton.onclick = () => deleteModel(brand.id, model.id);
+                            modelItem.appendChild(deleteModelButton);
+
+                            modelsList.appendChild(modelItem);
+                        });
+
+                        listItem.appendChild(modelsList);
+                    };
+
+                    listItem.appendChild(showModelsButton);
+                }
+            } else {
+                throw new Error('Nie udało się pobrać danych');
+            }
+        }
+
+        function handleErrorResponse(error) {
+            console.error('Żądanie nie powiodło się:', error.message);
+            alert('Żądanie nie powiodło się. Sprawdź konsolę w celu uzyskania szczegółowych informacji.');
+        }
+    </script>
+</body>
+
+</html>

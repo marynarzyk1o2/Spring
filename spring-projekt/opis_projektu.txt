@@ -1,0 +1,11 @@
+Projekt wzorowany na projekcie tworzonym podczas zajęć, rozbudowany o prosty front-end(plik index.html) uruchamiany 
+za pomocą Live-Server(http://127.0.0.1:5500/spring-projekt/index.html). 
+Dodatkowo program został rozbudowany o obsługę CORS.
+
+Rola admina
+Login: admin
+Haslo: 4321
+
+Rola użytkownika
+Login: user
+Haslo: 1234
